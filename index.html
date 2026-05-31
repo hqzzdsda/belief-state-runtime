@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>belief-state-runtime.skill</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root{
+  --canvas:#000;--canvas-soft:#0a0a0a;--canvas-card:#111113;--hairline:#3a3a3f;
+  --on-primary:#fff;--on-primary-mute:#f0f0fa;--ink-mute:#5a5a5f;
+  --green:#22c55e;--green-dim:#14532d;--red:#ef4444;--red-dim:#7f1d1d;
+  --yellow:#eab308;--yellow-dim:#713f12;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Inter",-apple-system,"Segoe UI",sans-serif;background:var(--canvas);color:var(--on-primary);line-height:1.5;-webkit-font-smoothing:antialiased}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(0,0,0,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+nav .logo{font-size:13px;font-weight:700;letter-spacing:1.17px;text-transform:uppercase;color:var(--on-primary)}
+nav .nav-right{display:flex;align-items:center;gap:20px}
+nav .nav-items{display:flex;gap:24px}
+nav .nav-items a{font-size:11px;font-weight:400;letter-spacing:.96px;text-transform:uppercase;color:var(--on-primary-mute);text-decoration:none;transition:color .15s}
+nav .nav-items a:hover{color:var(--on-primary)}
+.lang-toggle{display:flex;border:1px solid var(--hairline);border-radius:32px;overflow:hidden}
+.lang-toggle button{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:6px 14px;background:transparent;color:var(--ink-mute);border:none;cursor:pointer;transition:all .15s}
+.lang-toggle button.active{background:var(--on-primary);color:var(--canvas)}
+.lang-toggle button:hover:not(.active){color:var(--on-primary)}
+.hero{min-height:40vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 20px 28px;background:linear-gradient(180deg,#0a0a0a,#000)}
+.hero h1{font-size:clamp(32px,6vw,64px);font-weight:700;letter-spacing:1.6px;line-height:.95;text-transform:uppercase;color:var(--on-primary);margin-bottom:14px}
+.hero .subtitle{font-size:14px;font-weight:400;letter-spacing:.32px;color:var(--on-primary-mute);max-width:560px;margin-bottom:20px;padding:0 16px}
+.hero .source-badge{font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:4px 12px;border-radius:32px;border:1px solid var(--hairline);color:var(--ink-mute);margin-bottom:20px;display:inline-flex;align-items:center;gap:6px}
+.hero .source-badge .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.hero .source-badge .dot-ok{background:var(--green)}.hero .source-badge .dot-fail{background:var(--red)}
+.download-hero{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:500px;padding:0 16px}
+.download-hero .skill-name-input{width:100%;font-size:15px;font-weight:500;text-align:center;background:transparent;color:var(--on-primary);border:none;border-bottom:1px solid var(--hairline);padding:8px 0;outline:none}
+.download-hero .skill-name-input:focus{border-color:var(--on-primary-mute)}
+.download-hero .skill-name-input::placeholder{color:var(--ink-mute)}
+.download-hero .btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.download-hero .btn-label{font-size:10px;color:var(--ink-mute);letter-spacing:.5px;text-align:center;margin-top:2px}
+.container{max-width:880px;margin:0 auto;padding:0 20px 80px}
+.section{margin-bottom:36px}
+.section-title{font-size:12px;font-weight:700;letter-spacing:1.17px;text-transform:uppercase;color:var(--on-primary-mute);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--hairline)}
+.card{background:var(--canvas-card);border:1px solid var(--hairline);border-radius:8px;padding:20px;margin-bottom:12px}
+.template-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px}
+.tpl-btn{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:transparent;color:var(--on-primary-mute);border:1px solid var(--hairline);border-radius:32px;padding:8px 16px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tpl-btn:hover{border-color:var(--on-primary);color:var(--on-primary)}
+.tpl-btn.active{background:var(--on-primary);color:var(--canvas);border-color:var(--on-primary)}
+.domain-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(58,58,63,.4)}
+.domain-row:last-child{border-bottom:none}
+.domain-name{font-family:"JetBrains Mono","Fira Code",monospace;font-size:12px;flex:1;color:var(--on-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.domain-score{font-size:12px;font-weight:600;min-width:32px;text-align:right;color:var(--on-primary)}
+.badge{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;white-space:nowrap}
+.badge-high{background:var(--green-dim);color:var(--green)}.badge-mid{background:var(--yellow-dim);color:var(--yellow)}.badge-low{background:var(--red-dim);color:var(--red)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:2px;background:var(--hairline);border-radius:1px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--on-primary);border:2px solid var(--canvas);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--on-primary);border:2px solid var(--canvas);cursor:pointer}
+.add-row{display:flex;gap:8px;margin-top:12px}
+.add-row input[type=text]{flex:1;font-size:12px;font-family:"JetBrains Mono",monospace;background:var(--canvas);color:var(--on-primary);border:1px solid var(--hairline);border-radius:4px;padding:7px 10px;outline:none;min-width:0}
+.add-row input[type=text]::placeholder{color:var(--ink-mute)}.add-row input[type=text]:focus{border-color:var(--on-primary-mute)}
+.btn-ghost{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:transparent;color:var(--on-primary);border:1px solid var(--on-primary);border-radius:32px;padding:7px 14px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+.btn-filled{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:var(--on-primary);color:var(--canvas);border:none;border-radius:32px;padding:9px 18px;cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-filled:hover{opacity:.85}
+.btn-del{background:none;border:none;color:var(--ink-mute);cursor:pointer;padding:2px 6px;border-radius:4px;font-size:13px;transition:all .15s;flex-shrink:0}
+.btn-del:hover{color:var(--red);background:var(--red-dim)}
+.thr-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(58,58,63,.4)}.thr-row:last-child{border-bottom:none}
+.thr-info{flex:1;min-width:0}.thr-label{font-size:12px;font-weight:500;color:var(--on-primary)}.thr-desc{font-size:10px;color:var(--ink-mute);margin-top:2px}
+.thr-val{font-size:12px;font-weight:600;min-width:32px;text-align:right;color:var(--on-primary);flex-shrink:0}
+.sig-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(58,58,63,.4)}.sig-row:last-child{border-bottom:none}
+.sig-info{flex:1;min-width:0}.sig-name{font-size:12px;font-weight:500;color:var(--on-primary)}.sig-desc{font-size:10px;color:var(--ink-mute);margin-top:1px}
+.sig-pct{font-size:11px;color:var(--ink-mute);min-width:32px;text-align:right;flex-shrink:0}
+.preview-box{display:none;margin-top:16px;background:var(--canvas);border:1px solid var(--hairline);border-radius:8px;padding:16px;font-family:"JetBrains Mono",monospace;font-size:10px;line-height:1.7;color:var(--ink-mute);white-space:pre;overflow-x:auto;max-height:360px;overflow-y:auto}
+footer{text-align:center;padding:24px 16px;border-top:1px solid var(--hairline);font-size:10px;color:var(--ink-mute);letter-spacing:.8px;text-transform:uppercase}
+@media(max-width:640px){
+  nav{padding:12px 16px}nav .nav-items{display:none}
+  .hero{min-height:35vh;padding:80px 16px 20px}.hero h1{letter-spacing:.8px}.hero .subtitle{font-size:12px}
+  .container{padding:0 16px 60px}.template-bar{gap:4px}.tpl-btn{padding:6px 10px;font-size:10px}
+  .domain-row{gap:6px}.domain-name{font-size:11px}.add-row{flex-wrap:wrap}.add-row input[type=text]{min-width:100px}
+  .thr-row,.sig-row{flex-wrap:wrap;gap:8px}.download-hero .btn-row{gap:6px}.btn-filled,.btn-ghost{padding:8px 12px;font-size:10px}
+}
+[data-lang="en"]{display:none}[data-lang="zh"]{display:none}
+body.lang-en [data-lang="en"]{display:initial}body.lang-zh [data-lang="zh"]{display:initial}
+body.lang-en .st[data-lang="en"],body.lang-zh .st[data-lang="zh"]{display:block}
+body.lang-en .st[data-lang="zh"],body.lang-zh .st[data-lang="en"]{display:none}
+</style>
+</head>
+<body class="lang-en">
+
+<nav>
+  <div class="logo">belief-state-runtime.skill</div>
+  <div class="nav-right">
+    <div class="nav-items">
+      <a href="https://github.com/hqzzdsda/belief-state-runtime#readme">DOCS</a><a href="https://github.com/hqzzdsda/belief-state-runtime">GITHUB</a>
+    </div>
+    <div class="lang-toggle">
+      <button id="lang-en" class="active" onclick="setLang('en')">EN</button>
+      <button id="lang-zh" onclick="setLang('zh')">中文</button>
+    </div>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>belief-state-runtime<br>.skill</h1>
+  <p class="subtitle" data-lang="en">Load your skill from GitHub, customize domain rules, download the modified version.</p>
+  <p class="subtitle" data-lang="zh">从 GitHub 加载你的 skill，自定义域名规则，下载修改后的版本</p>
+  <div class="source-badge" id="source-badge">
+    <span class="dot dot-fail" id="source-dot"></span>
+    <span id="source-text" data-lang="en">NOT CONNECTED</span>
+    <span id="source-text-zh" data-lang="zh">未连接</span>
+  </div>
+  <div class="file-selector" style="display:flex;gap:6px;justify-content:center;margin-bottom:16px">
+    <button class="tpl-btn active" id="fs-assess" onclick="switchFile('assess')" style="font-size:10px">assess.py · Skill</button>
+    <button class="tpl-btn" id="fs-feature" onclick="switchFile('feature')" style="font-size:10px">feature_extractor.py · Package</button>
+  </div>
+  <div class="platform-badges" style="display:flex;gap:6px;justify-content:center;margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:9px;padding:3px 8px;border-radius:32px;border:1px solid var(--hairline);color:var(--ink-mute)">OpenClaw</span>
+    <span style="font-size:9px;padding:3px 8px;border-radius:32px;border:1px solid var(--hairline);color:var(--ink-mute)">Claude Code</span>
+    <span style="font-size:9px;padding:3px 8px;border-radius:32px;border:1px solid var(--hairline);color:var(--ink-mute)">Codex</span>
+    <span style="font-size:9px;padding:3px 8px;border-radius:32px;border:1px solid var(--hairline);color:var(--ink-mute)">Cursor</span>
+    <span style="font-size:9px;padding:3px 8px;border-radius:32px;border:1px solid var(--hairline);color:var(--ink-mute)">GitHub Copilot</span>
+  </div>
+  <div class="download-hero">
+    <input type="text" class="skill-name-input" id="skill-name" value="My Epistemic Skill"
+      data-lang-placeholder-en="Skill name" data-lang-placeholder-zh="技能名称" placeholder="Skill name" />
+    <div class="btn-row">
+      <button class="btn-filled" onclick="downloadZip()">
+        <span data-lang="en">↓ DOWNLOAD .ZIP</span><span data-lang="zh">↓ 下载 Skill 压缩包</span>
+      </button>
+      <button class="btn-ghost" id="btn-dl-py" onclick="downloadSkill()">
+        <span data-lang="en">DOWNLOAD assess.py</span><span data-lang="zh">下载 assess.py</span>
+      </button>
+      <button class="btn-ghost" onclick="downloadJSON()">JSON</button>
+      <button class="btn-ghost" onclick="togglePreview()">
+        <span data-lang="en">PREVIEW</span><span data-lang="zh">预览</span>
+      </button>
+    </div>
+    <div class="btn-label">
+      <span data-lang="en">.ZIP: SKILL.md + assess.py + config.json ｜ .PY: customize code above, then download</span>
+      <span data-lang="zh">.ZIP：SKILL.md + assess.py + config.json ｜ .PY：修改上方代码后下载</span>
+    </div>
+    <div class="preview-box" id="preview-box"></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="section">
+    <div class="section-title st" data-lang="en">PRESETS</div>
+    <div class="section-title st" data-lang="zh">预设模板</div>
+    <div class="template-bar">
+      <button class="tpl-btn active" id="tpl-current" onclick="applyTemplate('current')">
+        <span data-lang="en">FROM GITHUB</span><span data-lang="zh">从 GitHub 加载</span>
+      </button>
+      <button class="tpl-btn" onclick="applyTemplate('medical')">
+        <span data-lang="en">MEDICAL</span><span data-lang="zh">医疗</span>
+      </button>
+      <button class="tpl-btn" onclick="applyTemplate('legal')">
+        <span data-lang="en">LEGAL</span><span data-lang="zh">法律</span>
+      </button>
+      <button class="tpl-btn" onclick="applyTemplate('crypto')">
+        <span data-lang="en">CRYPTO</span><span data-lang="zh">金融</span>
+      </button>
+      <button class="tpl-btn" onclick="applyTemplate('chinese')">
+        <span data-lang="en">CHINESE</span><span data-lang="zh">中文互联网</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title st" data-lang="en">DOMAIN TRUST RULES</div>
+    <div class="section-title st" data-lang="zh">域名信任白名单</div>
+    <div class="card">
+      <div id="domain-list"></div>
+      <div class="add-row">
+        <input type="text" id="new-domain" placeholder="example.com" />
+        <input type="range" min="0" max="1" step="0.05" value="0.6" id="new-score" style="width:80px"
+          oninput="document.getElementById('ns-val').textContent=parseFloat(this.value).toFixed(2)" />
+        <span id="ns-val" style="font-size:12px;min-width:32px;color:var(--on-primary)">0.60</span>
+        <button class="btn-ghost" onclick="addDomain()">+ ADD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title st" data-lang="en">KEYWORD RELIABILITY RULES</div>
+    <div class="section-title st" data-lang="zh">关键词可靠性规则</div>
+    <div class="card">
+      <div id="keyword-list"></div>
+      <div class="add-row">
+        <input type="text" id="new-kw" placeholder="keyword1,keyword2" style="flex:2" />
+        <input type="range" min="0" max="1" step="0.05" value="0.6" id="new-kw-score" style="width:80px"
+          oninput="document.getElementById('kw-val').textContent=parseFloat(this.value).toFixed(2)" />
+        <span id="kw-val" style="font-size:12px;min-width:32px;color:var(--on-primary)">0.60</span>
+        <button class="btn-ghost" onclick="addKeyword()">+ ADD</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title st" data-lang="en">JUDGMENT THRESHOLDS</div>
+    <div class="section-title st" data-lang="zh">判断阈值</div>
+    <div class="card"><div id="threshold-list"></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title st" data-lang="en">SIGNAL WEIGHTS</div>
+    <div class="section-title st" data-lang="zh">信号权重</div>
+    <div class="card">
+      <div id="signal-list"></div>
+      <p style="font-size:10px;color:var(--ink-mute);margin-top:12px">
+        <span data-lang="en">NORMALIZED · TOTAL:</span>
+        <span data-lang="zh">自动归一化 · 合计:</span>
+        <span id="weight-total">100%</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<footer>belief-state-runtime.skill · v1.0.0 · 2026</footer>
+
+<script>
+// ── CONFIG ──
+let GITHUB_RAW = "https://raw.githubusercontent.com/hqzzdsda/belief-state-runtime/main/belief_state_runtime/skill/scripts/assess.py";
+const FALLBACK_DOMAINS = {"gov":0.9,"edu":0.9,"who.int":0.9,"pubmed.ncbi":0.9,"nature.com":0.9,"science.org":0.9,"reuters.com":0.7,"bbc.com":0.7,"apnews.com":0.7,"nytimes.com":0.7,"theguardian.com":0.7,"arxiv.org":0.6,"wikipedia.org":0.5,"twitter.com":0.3,"x.com":0.3,"reddit.com":0.3};
+const FALLBACK_KEYWORDS = {"官方,政府,who,nih,fda,央行":0.9,"研究,论文,期刊,nature,science,pubmed":0.8,"报告,白皮书,调查,统计":0.7,"新闻,报道,媒体,记者":0.6,"论坛,社交媒体,网友,微博,twitter":0.3};
+
+let lang="en", sourceLoaded=false, sourceCode="";
+let domains={}, keywords={}, thresholds={verify:0.65,contest:0.6}, signals={q1:40,q2:30,q3:20,q4:10};
+
+const TEMPLATES={
+  current:null,
+  medical:{domains:{"pubmed.ncbi.nlm.nih.gov":1.0,"nejm.org":0.98,"nature.com":0.95,"who.int":0.92,"cdc.gov":0.92,"thelancet.com":0.95,"webmd.com":0.5,"reddit.com":0.1},keywords:{"官方,政府,who,nih,fda,cdc":0.95,"研究,论文,期刊,nature,science,pubmed":0.9,"临床,试验,随机对照":0.85,"新闻,报道":0.5,"论坛,社交媒体,reddit":0.15}},
+  legal:{domains:{"supremecourt.gov":1.0,"law.cornell.edu":0.95,"uscourts.gov":0.95,"legislation.gov.uk":0.95,"reuters.com":0.75,"legalzoom.com":0.4},keywords:{"法院,判决,最高法":0.95,"法律,法规,条例":0.85,"律师,法律咨询":0.6,"新闻,报道":0.5,"论坛,社交媒体":0.2}},
+  crypto:{domains:{"sec.gov":0.98,"federalreserve.gov":0.95,"coindesk.com":0.72,"cointelegraph.com":0.65,"reddit.com":0.2,"twitter.com":0.15},keywords:{"央行,证监会,监管":0.9,"白皮书,项目方":0.6,"新闻,报道,分析":0.55,"论坛,社交媒体,reddit":0.2,"喊单,暴涨,moon":0.1}},
+  chinese:{domains:{"gov.cn":0.85,"xinhuanet.com":0.7,"caixin.com":0.78,"people.com.cn":0.65,"zhihu.com":0.35,"weibo.com":0.2,"wechat_mp":0.3},keywords:{"官方,政府,国务院":0.85,"研究,论文,期刊":0.75,"报告,白皮书,调查":0.7,"新闻,报道,媒体":0.6,"论坛,社交媒体,网友,微博":0.25}}
+};
+
+const THR_DEF=[
+  {key:"verify",label:"VERIFIED THRESHOLD",desc:"Min confidence for VERIFIED",descZh:"输出 VERIFIED 的最低置信度",min:0.5,max:0.95,step:0.05},
+  {key:"contest",label:"CONTESTED CAP",desc:"Max confidence when direct_refute",descZh:"直接反驳时的置信度上限",min:0.3,max:0.8,step:0.05}
+];
+const SIG_DEF=[
+  {key:"q1",label:"SOURCE RELIABILITY",desc:"Domain trust + keywords",descZh:"域名信任度 + 关键词"},
+  {key:"q2",label:"EVIDENCE DENSITY",desc:"Evidence fragment count",descZh:"证据片段数量"},
+  {key:"q3",label:"TEMPORAL FRESHNESS",desc:"How recent is the evidence",descZh:"证据的新近程度"},
+  {key:"q4",label:"PROVENANCE QUALITY",desc:"Source domain diversity",descZh:"来源域名的多样性"}
+];
+
+// ── LANGUAGE ──
+let currentFile="assess";
+const GITHUB_URLS={
+  assess: "https://raw.githubusercontent.com/hqzzdsda/belief-state-runtime/main/belief_state_runtime/skill/scripts/assess.py",
+  feature: "https://raw.githubusercontent.com/hqzzdsda/belief-state-runtime/main/epistemic/feature_extractor.py"
+};
+function switchFile(type){
+  currentFile=type;
+  document.getElementById("fs-assess").classList.toggle("active",type==="assess");
+  document.getElementById("fs-feature").classList.toggle("active",type==="feature");
+  const btn=document.getElementById("btn-dl-py");
+  if(type==="assess"){
+    btn.innerHTML='<span data-lang="en">DOWNLOAD assess.py</span><span data-lang="zh">下载 assess.py</span>';
+  }else{
+    btn.innerHTML='<span data-lang="en">DOWNLOAD feature_extractor.py</span><span data-lang="zh">下载 feature_extractor.py</span>';
+  }
+  GITHUB_RAW=GITHUB_URLS[type];
+  loadFromGitHub();
+}
+function setLang(l){
+  lang=l;document.body.className="lang-"+l;
+  document.getElementById("lang-en").classList.toggle("active",l==="en");
+  document.getElementById("lang-zh").classList.toggle("active",l==="zh");
+  document.querySelectorAll("[data-lang-placeholder-en]").forEach(el=>{el.placeholder=el.getAttribute("data-lang-placeholder-"+l)});
+  renderAll();
+}
+function t(en,zh){return lang==="en"?en:zh}
+
+// ── FETCH FROM GITHUB ──
+async function loadFromGitHub(){
+  const dot=document.getElementById("source-dot");
+  const text=document.getElementById("source-text");
+  try{
+    const resp=await fetch(GITHUB_RAW,{cache:"no-store"});
+    if(!resp.ok)throw new Error(resp.status);
+    sourceCode=await resp.text();
+    sourceLoaded=true;
+    dot.className="dot dot-ok";
+    text.textContent="LOADED FROM GITHUB";
+    document.getElementById("source-text-zh").textContent="已从 GitHub 加载";
+    parseSourceCode(sourceCode);
+    renderAll();
+  }catch(e){
+    console.warn("GitHub fetch failed, using fallback:",e);
+    sourceLoaded=false;
+    dot.className="dot dot-fail";
+    text.textContent="OFFLINE — USING DEFAULTS";
+    document.getElementById("source-text-zh").textContent="离线 — 使用默认值";
+    domains={...FALLBACK_DOMAINS};
+    keywords={...FALLBACK_KEYWORDS};
+    renderAll();
+  }
+}
+
+function parseSourceCode(code){
+  domains={};keywords={};
+  // Parse domain scores: ("pattern", score)
+  const domainBlock=code.match(/def _domain_score[\s\S]*?for pattern, score in \[([\s\S]*?)\]/);
+  if(domainBlock){
+    const re=/\("([^"]+)",\s*([\d.]+)\)/g;
+    let m;while(m=re.exec(domainBlock[1])){domains[m[1]]=parseFloat(m[2])}
+  }
+  // Parse keyword scores: (["kw1","kw2"], score)
+  const kwBlock=code.match(/def _keyword_reliability[\s\S]*?for keywords_list, score in \[([\s\S]*?)\]/);
+  if(kwBlock){
+    const re=/\(\[([^\]]+)\],\s*([\d.]+)\)/g;
+    let m;while(m=re.exec(kwBlock[1])){
+      const kws=m[1].match(/"([^"]+)"/g).map(s=>s.replace(/"/g,""));
+      keywords[kws.join(",")]=parseFloat(m[2]);
+    }
+  }
+  // Parse thresholds
+  const verifyMatch=code.match(/if conf >= ([\d.]+): return "VERIFIED"/);
+  if(verifyMatch)thresholds.verify=parseFloat(verifyMatch[1]);
+  const contestMatch=code.match(/min\(result\.raw_confidence,\s*([\d.]+)\)/);
+  if(contestMatch)thresholds.contest=parseFloat(contestMatch[1]);
+  // Parse signal weights from quality_factor formula
+  const wfMatch=code.match(/([\d.]+)\s*\*\s*result\.source_reliability\s*\+\s*([\d.]+)\*\s*result\.evidence_density\s*\+\s*([\d.]+)\*\s*result\.temporal_freshness\s*\+\s*([\d.]+)\*\s*result\.provenance_quality/);
+  if(wfMatch){
+    const w1=parseFloat(wfMatch[1]),w2=parseFloat(wfMatch[2]),w3=parseFloat(wfMatch[3]),w4=parseFloat(wfMatch[4]);
+    const sum=w1+w2+w3+w4;
+    signals.q1=Math.round(w1/sum*100);signals.q2=Math.round(w2/sum*100);
+    signals.q3=Math.round(w3/sum*100);signals.q4=Math.round(w4/sum*100);
+  }
+}
+
+// ── RENDER ──
+function badge(v){
+  if(v>=0.8)return`<span class="badge badge-high">${t("HIGH","高")}</span>`;
+  if(v>=0.5)return`<span class="badge badge-mid">${t("MEDIUM","中")}</span>`;
+  return`<span class="badge badge-low">${t("LOW","低")}</span>`;
+}
+function renderDomains(){
+  document.getElementById("domain-list").innerHTML=Object.entries(domains).sort((a,b)=>b[1]-a[1]).map(([d,v])=>`
+    <div class="domain-row"><span class="domain-name">${d}</span>${badge(v)}
+    <input type="range" min="0" max="1" step="0.05" value="${v}" style="max-width:110px"
+      oninput="domains['${d}']=parseFloat(this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2);renderDomains()"/>
+    <span class="domain-score">${v.toFixed(2)}</span>
+    <button class="btn-del" onclick="delete domains['${d}'];renderDomains()">✕</button></div>`).join("");
+}
+function addDomain(){const d=document.getElementById("new-domain").value.trim();if(!d)return;domains[d]=parseFloat(document.getElementById("new-score").value);document.getElementById("new-domain").value="";renderDomains()}
+function renderKeywords(){
+  document.getElementById("keyword-list").innerHTML=Object.entries(keywords).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <div class="domain-row"><span class="domain-name" style="font-size:11px">${k}</span>${badge(v)}
+    <input type="range" min="0" max="1" step="0.05" value="${v}" style="max-width:110px"
+      oninput="keywords['${k}']=parseFloat(this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2);renderKeywords()"/>
+    <span class="domain-score">${v.toFixed(2)}</span>
+    <button class="btn-del" onclick="delete keywords['${k}'];renderKeywords()">✕</button></div>`).join("");
+}
+function addKeyword(){const k=document.getElementById("new-kw").value.trim();if(!k)return;keywords[k]=parseFloat(document.getElementById("new-kw-score").value);document.getElementById("new-kw").value="";renderKeywords()}
+function renderThresholds(){
+  document.getElementById("threshold-list").innerHTML=THR_DEF.map(t_=>`
+    <div class="thr-row"><div class="thr-info"><div class="thr-label">${t_.label}</div><div class="thr-desc">${t(t_.desc,t_.descZh)}</div></div>
+    <input type="range" min="${t_.min}" max="${t_.max}" step="${t_.step}" value="${thresholds[t_.key]}" style="max-width:110px"
+      oninput="thresholds['${t_.key}']=parseFloat(this.value);this.nextElementSibling.textContent=parseFloat(this.value).toFixed(2)"/>
+    <span class="thr-val">${thresholds[t_.key].toFixed(2)}</span></div>`).join("");
+}
+function renderSignals(){
+  const total=Object.values(signals).reduce((a,b)=>a+b,0);
+  document.getElementById("signal-list").innerHTML=SIG_DEF.map(s=>`
+    <div class="sig-row"><div class="sig-info"><div class="sig-name">${s.label}</div><div class="sig-desc">${t(s.desc,s.descZh)}</div></div>
+    <input type="range" min="5" max="60" step="5" value="${signals[s.key]}" style="max-width:100px"
+      oninput="signals['${s.key}']=parseInt(this.value);renderSignals()"/>
+    <span class="sig-pct">${Math.round(signals[s.key]/total*100)}%</span></div>`).join("");
+  document.getElementById("weight-total").textContent=total+"%";
+}
+function renderAll(){renderDomains();renderKeywords();renderThresholds();renderSignals()}
+function applyTemplate(name){
+  if(name==="current"){if(sourceLoaded)parseSourceCode(sourceCode);else{domains={...FALLBACK_DOMAINS};keywords={...FALLBACK_KEYWORDS}}}
+  else if(TEMPLATES[name]){domains={...TEMPLATES[name].domains};keywords={...TEMPLATES[name].keywords}}
+  renderAll();
+  document.querySelectorAll(".tpl-btn").forEach(b=>{
+    const id=b.id||"";b.classList.toggle("active",id==="tpl-current"&&name==="current");
+    if(name!=="current"){const m=b.textContent.toLowerCase().includes(name)||(name==="chinese"&&(b.textContent.includes("CHINESE")||b.textContent.includes("中文")));b.classList.toggle("active",m)}
+  });
+}
+
+// ── BUILD feature_extractor.py ──
+function buildFeatureExtractor(){
+  if(!sourceCode)return buildFeatureExtractorFromScratch();
+  const w=Object.values(signals).reduce((a,b)=>a+b,0);
+  const wr=+(signals.q1/w).toFixed(2),wd=+(signals.q2/w).toFixed(2),wf=+(signals.q3/w).toFixed(2),wp=+(signals.q4/w).toFixed(2);
+  let code=sourceCode;
+  // Replace domain_score entries
+  const domainEntries=Object.entries(domains).map(([d,s])=>`            ("${d}", ${s})`).join(",\n");
+  code=code.replace(/(def _domain_score[\s\S]*?for pattern, score in \[)[\s\S]*?(\])/,`$1\n${domainEntries}\n        $2`);
+  // Replace keyword_reliability entries
+  const kwEntries=Object.entries(keywords).map(([k,s])=>`            (["${k.replace(/"/g,'\\"')}"], ${s})`).join(",\n");
+  code=code.replace(/(def _keyword_reliability[\s\S]*?for keywords_list, score in \[)[\s\S]*?(\])/,`$1\n${kwEntries}\n        $2`);
+  // Replace quality_factor weights
+  code=code.replace(/([\d.]+)\s*\*\s*result\.source_reliability\s*\+\s*([\d.]+)\*\s*result\.evidence_density\s*\+\s*([\d.]+)\*\s*result\.temporal_freshness\s*\+\s*([\d.]+)\*\s*result\.provenance_quality/,
+    `${wr} * result.source_reliability +\n            ${wd} * result.evidence_density +\n            ${wf} * result.temporal_freshness +\n            ${wp} * result.provenance_quality`);
+  // Replace thresholds
+  code=code.replace(/if conf >= [\d.]+: return "VERIFIED"/,`if conf >= ${thresholds.verify}: return "VERIFIED"`);
+  code=code.replace(/elif conf <= [\d.]+: return "UNCERTAIN"/,`elif conf <= 0.25: return "UNCERTAIN"`);
+  code=code.replace(/result\.final_confidence = min\(result\.raw_confidence, [\d.]+\)/,`result.final_confidence = min(result.raw_confidence, ${thresholds.contest})`);
+  // Add header
+  code=`# -*- coding: utf-8 -*-\n"""\npersonalized by belief-state-runtime.skill configurator\n${new Date().toISOString().split("T")[0]}\n"""\n\n`+code.replace(/^# -\*-.+?\n"""\n[\s\S]*?"""\n/,"");
+  return code;
+}
+
+function buildFeatureExtractorFromScratch(){
+  const w=Object.values(signals).reduce((a,b)=>a+b,0);
+  const wr=+(signals.q1/w).toFixed(2),wd=+(signals.q2/w).toFixed(2),wf=+(signals.q3/w).toFixed(2),wp=+(signals.q4/w).toFixed(2);
+  const de=Object.entries(domains).map(([d,s])=>`            ("${d}", ${s})`).join(",\n");
+  const ke=Object.entries(keywords).map(([k,s])=>`            (["${k}"], ${s})`).join(",\n");
+  return `# feature_extractor.py — personalized by belief-state-runtime.skill\n# ${new Date().toISOString().split("T")[0]}\n\nimport math, re, json as json_mod\nfrom typing import Dict, Tuple, Optional\nfrom dataclasses import dataclass, field\n\nLLM_FEATURES = {\n    "direct_support": "证据是否直接支持声明？",\n    "new_info": "证据是否提供了先前未提及的新信息？",\n    "logical_consistent": "证据与之前已知信息是否逻辑一致？",\n    "direct_refute": "证据是否明确反驳声明？",\n    "limitation": "证据是否指出声明的局限性或例外条件？",\n    "error_outdated": "证据是否揭示声明中的信息是错误的或已过时？",\n}\n\n@dataclass\nclass FeatureResult:\n    source_reliability: float = 0.5\n    evidence_density: float = 0.0\n    temporal_freshness: float = 0.5\n    provenance_quality: float = 0.2\n    quality_factor: float = 0.5\n    features: Dict[str, bool] = field(default_factory=dict)\n    support_score: float = 0.0\n    refute_score: float = 0.0\n    raw_confidence: float = 0.5\n    final_confidence: float = 0.5\n    state: str = "UNCERTAIN"\n    direct_refute: bool = False\n    limitation: bool = False\n\nclass FeatureExtractor:\n    def __init__(self, llm_chat_func=None):\n        if llm_chat_func is None:\n            from api.deepseek_client import llm_chat\n            self.llm_chat = lambda msgs, temp=0.05, max_tok=256: llm_chat(msgs, temp, max_tok)\n        else:\n            self.llm_chat = llm_chat_func\n\n    def extract(self, claim, evidence, previous_confidence=None, alpha=0.5):\n        result = FeatureResult()\n        self._extract_rule_signals(evidence, result)\n        self._extract_llm_features(claim, evidence, result)\n        result.quality_factor = ${wr} * result.source_reliability + ${wd} * result.evidence_density + ${wf} * result.temporal_freshness + ${wp} * result.provenance_quality\n        f = result.features\n        result.support_score = ((1.0 if f.get("direct_support") else 0.0) + (0.5 if f.get("new_info") else 0.0) + (0.3 if f.get("logical_consistent") else 0.0)) / 1.8\n        result.refute_score = ((1.0 if f.get("direct_refute") else 0.0) + (0.6 if f.get("error_outdated") else 0.0)) / 1.6\n        result.direct_refute = f.get("direct_refute", False)\n        result.limitation = f.get("limitation", False)\n        semantic = result.support_score * (1 - result.refute_score)\n        raw_conf = 0.6 * semantic + 0.4 * result.quality_factor\n        if result.limitation: raw_conf *= 0.85\n        result.raw_confidence = min(1.0, max(0.0, raw_conf))\n        if result.direct_refute:\n            result.state = "CONTESTED"\n            result.final_confidence = min(result.raw_confidence, ${thresholds.contest})\n            return result\n        result.final_confidence = self._incremental_update(result.raw_confidence, previous_confidence, alpha)\n        result.state = self._determine_state(result.final_confidence)\n        return result\n\n    def _extract_rule_signals(self, evidence, result):\n        if not evidence: return\n        domains = re.findall(r'https?://([^\\s/]+)', evidence)\n        if domains: result.source_reliability = sum(self._domain_score(d) for d in domains) / len(domains)\n        else: result.source_reliability = self._keyword_reliability(evidence.lower())\n        segments = [s.strip() for s in re.split(r'\\n\\n|(?<=[.。])\\s+', evidence) if len(s.strip()) > 20]\n        result.evidence_density = min(1.0, 0.3 + len(segments) * 0.2)\n        years = re.findall(r'\\b((?:19|20)\\d{2})\\b', evidence)\n        if years: result.temporal_freshness = round(1.0 / (1.0 + 2026 - max(int(y) for y in years)), 4)\n        else: result.temporal_freshness = 0.7\n        unique_tlds = set(".".join(d.split(".")[-2:]) if len(d.split(".")) >= 2 else d for d in domains)\n        result.provenance_quality = min(1.0, 0.4 + len(unique_tlds) * 0.2) if unique_tlds else 0.5\n\n    def _domain_score(self, domain):\n        domain = domain.lower()\n        for pattern, score in [\n${de},\n        ]:\n            if pattern in domain: return score\n        if domain.endswith(".gov") or domain.endswith(".edu"): return 0.9\n        if domain.endswith(".org"): return 0.6\n        return 0.5\n\n    def _keyword_reliability(self, text):\n        for kws, score in [\n${ke},\n        ]:\n            if any(w in text for w in kws): return score\n        return 0.6\n\n    def _extract_llm_features(self, claim, evidence, result):\n        try:\n            response = self.llm_chat([{"role":"user","content":f"基于声明和证据回答6个判断(JSON):\\n声明:{claim}\\n证据:{evidence[:1500]}\\n{{\\"direct_support\\":true/false,\\"new_info\\":true/false,\\"logical_consistent\\":true/false,\\"direct_refute\\":true/false,\\"limitation\\":true/false,\\"error_outdated\\":true/false}}"}], 0.05, 256)\n            m = re.search(r'\\{{[^{{}}]+\\}}', response)\n            if m:\n                data = json_mod.loads(m.group())\n                result.features = {k: bool(data.get(k, False)) for k in LLM_FEATURES}\n            else: result.features = {k: False for k in LLM_FEATURES}\n        except: result.features = {k: False for k in LLM_FEATURES}\n\n    def _incremental_update(self, raw, old, alpha):\n        if old is None: return raw\n        delta = raw - old\n        if delta > 0.1: return alpha * raw + (1 - alpha) * old\n        elif delta < -0.1: return min(old, raw)\n        return (old + raw) / 2.0\n\n    def _determine_state(self, conf):\n        if conf >= ${thresholds.verify}: return "VERIFIED"\n        elif conf <= 0.25: return "UNCERTAIN"\n        return "CONTESTED"\n`;
+}
+
+function buildJSON(){
+  const total=Object.values(signals).reduce((a,b)=>a+b,0);
+  return{skill_name:document.getElementById("skill-name").value||"my_skill",version:"1.0",created_at:new Date().toISOString().split("T")[0],
+    domain_rules:{...domains,default:0.5},keyword_rules:Object.entries(keywords).map(([k,v])=>({keywords:k.split(","),score:v})),
+    thresholds:{verify:thresholds.verify,contest:thresholds.contest},
+    signal_weights:{source_reliability:+(signals.q1/total).toFixed(3),evidence_density:+(signals.q2/total).toFixed(3),temporal_freshness:+(signals.q3/total).toFixed(3),provenance_quality:+(signals.q4/total).toFixed(3)}};
+}
+
+function downloadSkill(){
+  const fname=currentFile==="assess"?"assess.py":"feature_extractor.py";
+  const blob=new Blob([buildFeatureExtractor()],{type:"text/x-python"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
+}
+// ── CRC-32 ──
+const CRC32_TABLE=(()=>{const t=new Uint32Array(256);for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c}return t})();
+function crc32(data){let c=0xFFFFFFFF;for(let i=0;i<data.length;i++)c=CRC32_TABLE[(c^data[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+
+function downloadZip(){
+  const name=document.getElementById("skill-name").value.replace(/\s+/g,"_")||"belief_state_runtime";
+  const assessPy=buildFeatureExtractor();     // customized file (user-modified source)
+  const cfg=buildJSON();
+  const md=`---
+name: belief-state-runtime
+description: LLM-driven epistemic reasoning engine. Evaluates claims against evidence, outputs calibrated confidence and structured belief state (VERIFIED/CONTESTED/UNCERTAIN). Use when the agent needs to assess whether information is trustworthy, detect contradictions in evidence, or quantify uncertainty.
+---
+
+# belief-state-runtime.skill
+
+Evaluates the trustworthiness of a claim based on evidence.
+
+## When to use
+
+- User asks "is this true?" or "can I trust this?"
+- Agent collects information from multiple sources and needs to assess reliability
+- Detecting contradictions between evidence pieces
+- Quantifying confidence in a conclusion
+
+## ⚡ AUTO WORKFLOW (Default - Always Run This First)
+
+**IMPORTANT: When this skill is triggered, you MUST follow this workflow automatically:**
+
+\`\`\`python
+from assess import get_assessment_prompt, assess_claim_with_response
+
+# Step 1: SEARCH FOR EVIDENCE (MANDATORY)
+# Use your search tool to find real, verifiable evidence about the claim.
+
+# Step 2: Get the assessment prompt
+prompt = get_assessment_prompt(claim="The claim", evidence="Search results + user's evidence")
+
+# Step 3: YOU (the AI) answer the prompt with 6 boolean judgments
+# Based on your search results and analysis:
+#   - direct_support: Does the evidence support the claim?
+#   - new_info: Does it provide new information?
+#   - logical_consistent: Is it logically consistent?
+#   - direct_refute: Does it explicitly refute the claim?
+#   - limitation: Are there limitations or exceptions?
+#   - error_outdated: Is the claim outdated or wrong?
+#
+# Your answer format:
+#   {"direct_support": true/false, "new_info": true/false, ...}
+
+# Step 4: Get final result
+result = assess_claim_with_response(
+    claim="The claim",
+    evidence="Search results + user's evidence",
+    llm_response='{"direct_support": true, ...}'  # YOUR judgment
+)
+
+# Step 5: Present the result to the user
+\`\`\`
+
+### Workflow Summary
+
+| Step | Action | Tool/Function |
+|------|--------|---------------|
+| 1 | **Search for evidence** | online-search / multi-search-engine |
+| 2 | **Get assessment prompt** | \`get_assessment_prompt(claim, evidence)\` |
+| 3 | **Make 6 judgments** | YOU (the AI) |
+| 4 | **Get result** | \`assess_claim_with_response(claim, evidence, llm_response)\` |
+| 5 | **Present to user** | Your response |
+
+## How it works
+
+1. **Search for evidence** (MANDATORY): Use search tools to find real, verifiable evidence.
+2. **Rule layer** (Python): \`assess.py\` computes source reliability, evidence density, temporal freshness.
+3. **LLM layer** (YOU): The AI agent answers 6 boolean questions about the evidence.
+4. **Aggregation** (Python): Combines rule signals and your judgments into calibrated confidence.
+
+## Output
+
+\`\`\`json
+{
+  "state": "VERIFIED",
+  "confidence": 0.83,
+  "confidence_range": [0.68, 0.98],
+  "features": {"direct_support": true, ...},
+  "summary": "Evidence strongly supports the claim"
+}
+\`\`\`
+
+States:
+- **VERIFIED** (confidence >= 0.65): Agent can cite this information
+- **CONTESTED** (0.25 < confidence < 0.65): Agent should note disagreement
+- **UNCERTAIN** (confidence <= 0.25): Agent should seek more information
+
+## Files
+
+- \`assess.py\` — self-contained skill with your custom domain/keyword/threshold/weight rules
+- \`config.json\` — your configuration in JSON format
+
+Compatible with OpenClaw · Claude Code · Codex · Cursor · GitHub Copilot.
+
+Customized via [belief-state-runtime configurator](https://hqzzdsda.github.io/belief-state-runtime/)
+`;
+  const files={"SKILL.md":md,"assess.py":assessPy,"config.json":JSON.stringify(cfg,null,2)};
+  const encoder=new TextEncoder();
+  let central=[],local=[],offset=0;
+  const now=new Date();const dosTime=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+  const dosDate=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+  for(const [fname,content] of Object.entries(files)){
+    const data=encoder.encode(content);
+    const nameBytes=encoder.encode(fname);
+    const crc=crc32(data);
+    const size=data.length;
+    // Local file header (30 + filename)
+    const lh=new Uint8Array(30+nameBytes.length);
+    const lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true);
+    lv.setUint16(4,20,true);                // version
+    lv.setUint16(6,0x0800,true);            // flags (UTF-8)
+    lv.setUint16(8,0,true);                 // stored
+    lv.setUint16(10,dosTime,true);
+    lv.setUint16(12,dosDate,true);
+    lv.setUint32(14,crc,true);              // CRC-32
+    lv.setUint32(18,size,true);             // compressed size
+    lv.setUint32(22,size,true);             // uncompressed size
+    lv.setUint16(26,nameBytes.length,true);
+    lv.setUint16(28,0,true);                // no extra field
+    lh.set(nameBytes,30);
+    local.push(lh,data);
+    // Central directory entry (46 + filename)
+    const cd=new Uint8Array(46+nameBytes.length);
+    const cv=new DataView(cd.buffer);
+    cv.setUint32(0,0x02014b50,true);
+    cv.setUint16(4,20,true);                // version made by
+    cv.setUint16(6,20,true);                // version needed
+    cv.setUint16(8,0x0800,true);            // flags (UTF-8)
+    cv.setUint16(10,0,true);                // stored
+    cv.setUint16(12,dosTime,true);
+    cv.setUint16(14,dosDate,true);
+    cv.setUint32(16,crc,true);              // CRC-32
+    cv.setUint32(20,size,true);             // compressed size
+    cv.setUint32(24,size,true);             // uncompressed size
+    cv.setUint16(28,nameBytes.length,true);
+    cv.setUint16(30,0,true);                // no extra
+    cv.setUint16(32,0,true);                // no comment
+    cv.setUint16(34,0,true);                // disk
+    cv.setUint16(36,0,true);                // internal attrs
+    cv.setUint32(38,0,true);                // external attrs
+    cv.setUint32(42,offset,true);           // local header offset
+    cd.set(nameBytes,46);
+    central.push(cd);
+    offset+=lh.length+size;
+  }
+  // End of central directory
+  const eocd=new Uint8Array(22);
+  const ev=new DataView(eocd.buffer);
+  const count=Object.keys(files).length;
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(4,0,true);ev.setUint16(6,0,true);
+  ev.setUint16(8,count,true);
+  ev.setUint16(10,count,true);
+  const cdSize=central.reduce((s,a)=>s+a.length,0);
+  ev.setUint32(12,cdSize,true);
+  ev.setUint32(16,offset,true);
+  ev.setUint16(20,0,true);
+  const zip=new Blob([...local,...central,eocd],{type:"application/zip"});
+  const url=URL.createObjectURL(zip);const a=document.createElement("a");
+  a.href=url;a.download=name+".zip";a.click();URL.revokeObjectURL(url);
+}
+function downloadJSON(){
+  const cfg=buildJSON();const blob=new Blob([JSON.stringify(cfg,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");
+  a.href=url;a.download=(cfg.skill_name.replace(/\s+/g,"_"))+".json";a.click();URL.revokeObjectURL(url);
+}
+function togglePreview(){
+  const box=document.getElementById("preview-box");
+  if(box.style.display==="none"||!box.style.display){box.textContent=buildFeatureExtractor();box.style.display="block"}
+  else{box.style.display="none"}
+}
+
+// ── INIT ──
+loadFromGitHub();
+</script>
+</body>
+</html>

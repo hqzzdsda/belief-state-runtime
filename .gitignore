@@ -1,0 +1,94 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime output (regenerated each run)
+output/
+output_v4_test/
+
+# Cost logs (append-only runtime data)
+epistemic/cost_log.jsonl
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# pytest
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Test results (generated)
+tests/results/
+tests/epistemic_scenarios/results/
+tests/epistemic_scenarios/dnli_blocks/
+eval_results/
+eval_results_*/
+*_results.json
+*_results_*.json
+
+# Datasets (too large, download separately)
+eval_subsets/
+datasets/
+delta-NLI/
+fever_*.json
+fever_*.txt
+*_subset.json
+*_test30.json
+*_test_fetch.json
+*_with_evidence.json
+
+# Optimizer output
+optimizer_output/
+
+# Ground truth results
+ground_truth/results/
+
+# Secrets
+.env
+.env.local
+
+# Data files
+*.jsonl
+*.jsonl.zip
+
+# Build artifacts
+*.egg-info/
+*.egg-info
+build/
+dist/
+
+# Personal files
+*.docx
+*.doc
+
+# Local dev only (not published)
+CLAUDE.md
+DESIGN.md
+TECHNICAL_REPORT.html
+/__init__.py
+
+# Temp files
+_test_*.txt
+_test_*.json
+*.log
+
+# Local organization (not tracked)
+_results/
+_data/
+_archive_old/
+archive/
+docs/archive/
+/skill/
+real_fever_*.json
+truthfulqa_*.json
