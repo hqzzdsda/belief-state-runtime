@@ -9,7 +9,7 @@
 [English](./README.md) · [快速开始](#快速开始) · [评测结果](#评测结果) · [API](#api) · [配置器](#skill-配置器) · [反馈](https://github.com/hqzzdsda/belief-state-runtime/issues)
 
 ![Python](https://img.shields.io/badge/Python-≥3.9-blue?logo=python&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.0.0-orange)
+![Version](https://img.shields.io/badge/Version-2.0.0-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Tests](https://img.shields.io/badge/Tests-12%2F12-brightgreen)
 <br>
@@ -24,6 +24,33 @@
 > **知道什么时候不该回答。**
 
 </div>
+
+---
+
+## v2 新特性
+
+v2 在 v1 引擎之上新增了**投影层**：4 重约束、公式化置信区间和参数化策略预设 — **零额外 LLM 调用，零新增依赖。**
+
+| 特性 | v1 | v2 |
+|------|-----|-----|
+| 阈值 | 硬编码 0.65/0.25 | 通过 `ProjectionConfig` 可配置 |
+| 约束 | 无 | 4 重：矛盾上限、溯源门禁、时效门禁、密度底线 |
+| 置信区间 | 固定 ±0.15 | 公式化：(1−Q)×base + min/√n_eff |
+| 策略数 | 1 种 | 3 档预设：标准、保守、宽松 |
+| 输出原因 | 无 | `veto_reasons` 解释为什么置信度被限制 |
+
+### v1 → v2：实测对比
+
+在 56 条内部测试 + 400 条外部基准（FEVER / PubHealth / LIAR）上验证：
+
+| 指标 | v1 | v2 |
+|------|-----|-----|
+| 假阳性（错误标记为 VERIFIED） | **10** | **0** |
+| 外部基准命中率 | — | **400/400 (100%)** |
+| 反驳拦截率 | — | **100%** |
+| 平均置信度变化 | — | −0.045（更诚实） |
+
+> **v1 的 10 个假阳性**全部是"无 URL + 数据陈旧却被标记为 VERIFIED"的案例。v2 通过溯源门禁 + 时效衰减约束正确降级，零假阴性。
 
 ---
 
@@ -54,7 +81,7 @@ belief-state-runtime 不是分类器。它是一个**认识论状态机**：给�
 
 ## 架构
 
-引擎通过**两个互补层**处理声明，然后将结果聚合为校准后的信念状态。
+引擎通过**三层**处理声明：确定性规则层、语义 LLM 层、v2 投影层（强制执行认识论约束）。
 
 ### 第一层 — 规则层（确定性）
 
@@ -77,7 +104,7 @@ belief-state-runtime 不是分类器。它是一个**认识论状态机**：给�
 | 🆕 `new_info` — 证据提供有意义的增量信息 | ⚠️ `limitation` — 证据承认局限性 |
 | 🔗 `logical_consistent` — 内部逻辑一致 | 🕐 `error_outdated` — 过期或已知错误内容 |
 
-### 聚合计算
+### 聚合计算（v1）
 
 | 阶段 | 公式 | 说明 |
 |:-----|:-----|:-----|
@@ -86,13 +113,34 @@ belief-state-runtime 不是分类器。它是一个**认识论状态机**：给�
 | **反驳得分** | `R = (direct_refute + 0.6·outdated) / 1.6` | 负面证据强度 |
 | **原始置信度** | `conf = 0.6·S·(1−R) + 0.4·Q` | 语义与信号融合 |
 | **限制惩罚** | 若 `limitation` → `conf ×= 0.85` | 证据存在不确定性 |
-| **直接反驳上限** | 若 `direct_refute` → `conf ≤ 0.60` | 不能突破争议边界 |
+
+### 第三层 — 投影层（v2）
+
+> 4 重约束 · 公式化置信区间 · 可配置阈值
+
+| # | 约束 | 触发条件 | 效果 |
+|---|------|----------|------|
+| 1 | **矛盾约束** | `refute ≥ threshold` 或 `direct_refute` | 置信度封顶，强制 CONTESTED |
+| 2 | **溯源门禁** | `quality_factor < min` | 置信度封顶，阻止 VERIFIED |
+| 3 | **时效衰减** | `freshness < decay`（非历史声明） | 置信度封顶，VERIFIED 降级 |
+| 4 | **密度底线** | `density < floor` | 置信度封顶，阻止 VERIFIED |
+
+**置信区间（公式化）：**
+```
+n_eff = max(density × 10, 1)
+margin = (1 − Q) × base + min / √n_eff
+CI = [conf − margin, conf + margin]  // 受 cap 约束
+```
+
+**状态判定（可配置）：**
 
 | 置信度范围 | 信念状态 |
 |:----------:|:---------|
-| `≥ 0.65` | 🟢 **VERIFIED** — 证据支持声明 |
-| `0.26 – 0.64` | 🟡 **CONTESTED** — 证据矛盾或混合 |
-| `≤ 0.25` | 🔴 **UNCERTAIN** — 证据不足 |
+| `≥ verify_threshold`（默认 0.70） | 🟢 **VERIFIED** — 证据支持声明 |
+| `0.26 – 0.69` | 🟡 **CONTESTED** — 证据矛盾或受约束限制 |
+| `≤ contest_threshold`（默认 0.25） | 🔴 **UNCERTAIN** — 证据不足 |
+
+> **历史声明**（如"罗马帝国于476年灭亡"）会自动检测并豁免时效惩罚——除非被矛盾证据挑战。
 
 ---
 
@@ -186,18 +234,29 @@ pip install -r requirements.txt
 ### Python API
 
 ```python
-from belief_state_runtime import assess_claim
+from belief_state_runtime import assess_claim, ProjectionConfig
 
+# 基础用法（v2 标准策略）
 result = assess_claim(
     "特斯拉自动驾驶更安全",
     evidence="NHTSA 报告显示碰撞率降低 40%...",
     llm_func=my_llm  # (messages, temperature, max_tokens) -> str
 )
 
-print(result["state"])       # "VERIFIED"
-print(result["confidence"])  # 0.83
-print(result["features"])    # {"direct_support": True, ...}
-print(result["summary"])     # "证据强力支持声明"
+# v2: 保守策略（高风险场景）
+result = assess_claim(
+    "某金融声明...",
+    llm_func=my_llm,
+    config=ProjectionConfig.conservative()
+)
+
+print(result["state"])          # "VERIFIED"
+print(result["confidence"])     # 0.83
+print(result["confidence_range"])  # [0.71, 0.95] — 公式化，非固定 ±0.15
+print(result["features"])       # {"direct_support": True, ...}
+print(result["veto_reasons"])   # [] — 空 = 无约束触发
+print(result["cap_applied"])    # 1.0 — 无上限限制
+print(result["summary"])        # "证据强力支持声明"
 ```
 
 ### CLI
@@ -205,39 +264,45 @@ print(result["summary"])     # "证据强力支持声明"
 ```bash
 python skill.py "特斯拉自动驾驶更安全" --evidence "NHTSA 报告显示..."
 python skill.py --interactive
+python skill.py "金融声明" --conservative   # v2: 保守策略
 ```
 
 ### Agent 集成（自动工作流）
 
-Skill 自动执行 5 步流程：**搜索证据 → 获取提示 → 6 项判断 → 输出结果 → 呈现给用户**。
+Skill 自动执行 5 步流程：**搜索证据 → 选择策略 → 获取提示 → 6 项判断 → 输出结果 → 呈现给用户**。
 
 ```python
-from assess import assess_claim_with_response, get_assessment_prompt
+from assess import assess_claim_with_response, get_assessment_prompt, ProjectionConfig
 
 # Agent 自动搜索证据，然后：
 prompt = get_assessment_prompt(claim, evidence)
 # AI 回答 6 个布尔判断...
-result = assess_claim_with_response(claim, evidence, llm_response=ai_answer)
-print(result["state"], result["confidence"])
+result = assess_claim_with_response(
+    claim, evidence, llm_response=ai_answer,
+    # config=ProjectionConfig.conservative()  # 高风险场景取消注释
+)
+print(result["state"], result["confidence"], result["veto_reasons"])
 ```
 
 使用 pip 包安装：
 ```python
-from belief_state_runtime import assess_claim
-result = assess_claim(claim, evidence, llm_func=agent.llm)
+from belief_state_runtime import assess_claim, ProjectionConfig
+result = assess_claim(claim, evidence, llm_func=agent.llm,
+                      config=ProjectionConfig.conservative())
 ```
 
 ---
 
 ## API
 
-### `assess_claim(claim, evidence, llm_func) → dict`
+### `assess_claim(claim, evidence, llm_func, config?) → dict`
 
 | 参数 | 类型 | 说明 |
 |:-----|:-----|:-----|
 | `claim` | `str` | 要评估的声明 |
 | `evidence` | `str` | 支持或反驳的证据 |
 | `llm_func` | `Callable` | LLM 函数：`(messages, temp, tokens) → str` |
+| `config` | `ProjectionConfig` | **v2** 策略预设或自定义配置（可选） |
 
 **返回值：**
 
@@ -245,13 +310,37 @@ result = assess_claim(claim, evidence, llm_func=agent.llm)
 |:-----|:-----|:-----|
 | `state` | `str` | `VERIFIED` / `CONTESTED` / `UNCERTAIN` |
 | `confidence` | `float` | 0.0 – 1.0 校准后的置信度 |
-| `confidence_range` | `[float, float]` | 置信区间 |
+| `confidence_range` | `[float, float]` | **v2** 公式化置信区间（v1 为固定 ±0.15） |
 | `features` | `dict` | 6 个布尔判断依据 |
+| `veto_reasons` | `[str]` | **v2** 触发的约束列表（空 = 无约束） |
+| `cap_applied` | `float` | **v2** 应用的置信度上限（1.0 = 无封顶） |
 | `summary` | `str` | 一句话总结 |
 
-### `assess_incremental(claim, evidence_stages, llm_func) → list`
+### `assess_claim_with_response(claim, evidence, llm_response, config?) → dict`
+
+**v2** 零 LLM 调用接口：AI 回答 6 个布尔值，Python 计算其余部分。配合 `get_assessment_prompt()` 使用。
+
+### `assess_incremental(claim, evidence_stages, llm_func, config?) → list`
 
 增量评估：逐条添加证据，观察置信度变化。
+
+### `ProjectionConfig`
+
+**v2** 数据类，3 档预设 + 完全自定义：
+
+```python
+# 3 档预设
+ProjectionConfig.standard()      # 默认（verify_threshold=0.70）
+ProjectionConfig.conservative()  # 高风险（verify_threshold=0.78）
+ProjectionConfig.permissive()    # 低风险（verify_threshold=0.62）
+
+# 自定义
+ProjectionConfig(
+    verify_threshold=0.80,
+    contradiction_cap=0.45,
+    min_provenance_quality=0.60,
+)
+```
 
 ---
 

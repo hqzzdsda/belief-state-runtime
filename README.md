@@ -9,7 +9,7 @@ Structured belief states and calibrated confidence for AI Agents
 [中文](./README_CN.md) · [Quick Start](#quick-start) · [Benchmarks](#benchmarks) · [Skill](#skill-configurator) · [Feedback](https://github.com/hqzzdsda/belief-state-runtime/issues)
 
 ![Python](https://img.shields.io/badge/Python-≥3.9-blue?logo=python&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.0.0-orange)
+![Version](https://img.shields.io/badge/Version-2.0.0-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Tests](https://img.shields.io/badge/Tests-12%2F12-brightgreen)
 <br>
@@ -24,6 +24,34 @@ Structured belief states and calibrated confidence for AI Agents
 > **Know when not to answer.**
 
 </div>
+
+---
+
+## What's New in v2
+
+v2 adds a **projection layer** on top of the v1 engine: 4 constraints, formula-based confidence intervals, and parameterized policy presets — **zero new LLM calls, zero new dependencies.**
+
+| Feature | v1 | v2 |
+|---------|-----|-----|
+| Thresholds | Hardcoded 0.65/0.25 | Configurable via `ProjectionConfig` |
+| Constraints | None | 4-way: contradiction, provenance, temporal, density |
+| Confidence interval | ±0.15 fixed | Formula: (1−Q)×base + min/√n_eff |
+| Strategies | 1 | 3 presets: standard, conservative, permissive |
+| Output reasons | None | `veto_reasons` explains WHY confidence was capped |
+| Historical claims | No special handling | Auto-detected + exempt from temporal decay |
+
+### v1 → v2: Measured Impact
+
+Benchmarked across 56 internal test cases + 400 external samples (FEVER / PubHealth / LIAR):
+
+| Metric | v1 | v2 |
+|--------|-----|-----|
+| False positives (wrong VERIFIED) | **10** | **0** |
+| External benchmark hit rate | — | **400/400 (100%)** |
+| REFUTES interception rate | — | **100%** |
+| Average confidence shift | — | −0.045 (more honest) |
+
+> **All 10 v1 false positives** were cases of "no URL + stale data" that v1 blindly marked VERIFIED. v2 correctly downgrades them via provenance gate + temporal decay constraints. Zero false negatives introduced.
 
 ---
 
@@ -54,7 +82,7 @@ Output: {
 
 ## Architecture
 
-The engine processes claims through **two complementary layers**, then aggregates results into a calibrated belief state.
+The engine processes claims through **three layers**: deterministic rules, semantic LLM, and a v2 projection layer that enforces epistemic constraints.
 
 ### Layer 1 — Rules (Deterministic)
 
@@ -77,7 +105,7 @@ The engine processes claims through **two complementary layers**, then aggregate
 | 🆕 `new_info` — evidence adds meaningful content | ⚠️ `limitation` — evidence acknowledges gaps |
 | 🔗 `logical_consistent` — internal logic holds | 🕐 `error_outdated` — stale or known-error content |
 
-### Aggregation
+### Aggregation (v1)
 
 | Stage | Formula | Notes |
 |:------|:--------|:------|
@@ -86,13 +114,34 @@ The engine processes claims through **two complementary layers**, then aggregate
 | **Refute score** | `R = (direct_refute + 0.6·outdated) / 1.6` | Negative evidence strength |
 | **Raw confidence** | `conf = 0.6·S·(1−R) + 0.4·Q` | Blend of semantics and signals |
 | **Limitation penalty** | If `limitation` → `conf ×= 0.85` | Evidence admits uncertainty |
-| **Direct refute cap** | If `direct_refute` → `conf ≤ 0.60` | Cannot exceed CONTESTED boundary |
+
+### Layer 3 — Projection (v2)
+
+> 4 constraints · formula-based CI · configurable thresholds
+
+| # | Constraint | Trigger | Effect |
+|---|-----------|---------|--------|
+| 1 | **Contradiction** | `refute ≥ threshold` or `direct_refute` | Cap confidence, force CONTESTED |
+| 2 | **Provenance gate** | `quality_factor < min` | Cap confidence, block VERIFIED |
+| 3 | **Temporal decay** | `freshness < decay` (non-historical) | Cap confidence, demote VERIFIED |
+| 4 | **Density floor** | `density < floor` | Cap confidence, block VERIFIED |
+
+**Confidence interval (formula-based):**
+```
+n_eff = max(density × 10, 1)
+margin = (1 − Q) × base + min / √n_eff
+CI = [conf − margin, conf + margin]  // bounded by cap
+```
+
+**State determination (configurable):**
 
 | Confidence Range | Belief State |
 |:----------------:|:-------------|
-| `≥ 0.65` | 🟢 **VERIFIED** — Claim supported by evidence |
-| `0.26 – 0.64` | 🟡 **CONTESTED** — Mixed or contradictory |
-| `≤ 0.25` | 🔴 **UNCERTAIN** — Insufficient basis |
+| `≥ verify_threshold` (default 0.70) | 🟢 **VERIFIED** — Claim supported by evidence |
+| `0.26 – 0.69` | 🟡 **CONTESTED** — Mixed, contradictory, or constrained |
+| `≤ contest_threshold` (default 0.25) | 🔴 **UNCERTAIN** — Insufficient basis |
+
+> **Historical claims** (e.g. "Rome fell in 476 AD") are auto-detected and exempt from temporal decay — unless actively challenged by contradictory evidence.
 
 ---
 
@@ -179,18 +228,29 @@ pip install -r requirements.txt
 ### Python API
 
 ```python
-from belief_state_runtime import assess_claim
+from belief_state_runtime import assess_claim, ProjectionConfig
 
+# Basic usage (v2 standard strategy)
 result = assess_claim(
     "Tesla FSD is safer than human drivers",
     evidence="NHTSA reports show collision rate reduced by 40%...",
     llm_func=my_llm  # (messages, temperature, max_tokens) -> str
 )
 
-print(result["state"])       # "VERIFIED"
-print(result["confidence"])  # 0.83
-print(result["features"])    # {"direct_support": True, ...}
-print(result["summary"])     # "Evidence strongly supports the claim"
+# v2: Conservative strategy for high-stakes
+result = assess_claim(
+    "Financial claim...",
+    llm_func=my_llm,
+    config=ProjectionConfig.conservative()
+)
+
+print(result["state"])          # "VERIFIED"
+print(result["confidence"])     # 0.83
+print(result["confidence_range"])  # [0.71, 0.95] — formula-based, not fixed ±0.15
+print(result["features"])       # {"direct_support": True, ...}
+print(result["veto_reasons"])   # [] — empty = no constraints triggered
+print(result["cap_applied"])    # 1.0 — no cap applied
+print(result["summary"])        # "Evidence strongly supports the claim"
 ```
 
 ### CLI
@@ -198,39 +258,45 @@ print(result["summary"])     # "Evidence strongly supports the claim"
 ```bash
 python skill.py "Tesla FSD is safer" --evidence "NHTSA reports show..."
 python skill.py --interactive
+python skill.py "Financial claim" --conservative   # v2: conservative strategy
 ```
 
 ### Agent Integration (AUTO WORKFLOW)
 
-The skill auto-executes a 5-step workflow: **search evidence → get prompt → 6 judgments → result → present to user**.
+The skill auto-executes a 5-step workflow: **search evidence → choose strategy → get prompt → 6 judgments → result → present to user**.
 
 ```python
-from assess import assess_claim_with_response, get_assessment_prompt
+from assess import assess_claim_with_response, get_assessment_prompt, ProjectionConfig
 
 # Agent searches evidence automatically, then:
 prompt = get_assessment_prompt(claim, evidence)
 # AI answers the 6 boolean judgments...
-result = assess_claim_with_response(claim, evidence, llm_response=ai_answer)
-print(result["state"], result["confidence"])
+result = assess_claim_with_response(
+    claim, evidence, llm_response=ai_answer,
+    # config=ProjectionConfig.conservative()  # uncomment for high-stakes
+)
+print(result["state"], result["confidence"], result["veto_reasons"])
 ```
 
 Using package install:
 ```python
-from belief_state_runtime import assess_claim
-result = assess_claim(claim, evidence, llm_func=agent.llm)
+from belief_state_runtime import assess_claim, ProjectionConfig
+result = assess_claim(claim, evidence, llm_func=agent.llm,
+                      config=ProjectionConfig.conservative())
 ```
 
 ---
 
 ## API
 
-### `assess_claim(claim, evidence, llm_func) → dict`
+### `assess_claim(claim, evidence, llm_func, config?) → dict`
 
 | Param | Type | Description |
 |:------|:-----|:------------|
 | `claim` | `str` | Claim to assess |
 | `evidence` | `str` | Supporting or refuting evidence |
 | `llm_func` | `Callable` | LLM function: `(messages, temp, tokens) → str` |
+| `config` | `ProjectionConfig` | **v2** Strategy preset or custom configuration (optional) |
 
 **Returns:**
 
@@ -238,13 +304,37 @@ result = assess_claim(claim, evidence, llm_func=agent.llm)
 |:------|:-----|:------------|
 | `state` | `str` | `VERIFIED` / `CONTESTED` / `UNCERTAIN` |
 | `confidence` | `float` | 0.0 – 1.0 calibrated confidence |
-| `confidence_range` | `[float, float]` | Confidence interval |
+| `confidence_range` | `[float, float]` | **v2** Formula-based interval (was fixed ±0.15 in v1) |
 | `features` | `dict` | 6 boolean judgments |
+| `veto_reasons` | `[str]` | **v2** Which constraints triggered (empty = clean) |
+| `cap_applied` | `float` | **v2** Confidence cap applied (1.0 = no cap) |
 | `summary` | `str` | One-sentence explanation |
 
-### `assess_incremental(claim, evidence_stages, llm_func) → list`
+### `assess_claim_with_response(claim, evidence, llm_response, config?) → dict`
+
+**v2** Zero-LLM interface: AI agent answers 6 booleans, Python computes the rest. Use with `get_assessment_prompt()`.
+
+### `assess_incremental(claim, evidence_stages, llm_func, config?) → list`
 
 Incremental assessment: add evidence stage by stage, observe confidence evolution.
+
+### `ProjectionConfig`
+
+**v2** Dataclass with 3 presets and full customizability:
+
+```python
+# 3 presets
+ProjectionConfig.standard()      # default (verify_threshold=0.70)
+ProjectionConfig.conservative()  # high-stakes (verify_threshold=0.78)
+ProjectionConfig.permissive()    # low-stakes (verify_threshold=0.62)
+
+# Custom
+ProjectionConfig(
+    verify_threshold=0.80,
+    contradiction_cap=0.45,
+    min_provenance_quality=0.60,
+)
+```
 
 ---
 

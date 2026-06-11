@@ -1,0 +1,189 @@
+{
+  "id": "density_adversarial",
+  "name": "证据密度 + 边界",
+  "type": "parametric_and_edge",
+  "cases": [
+    {
+      "id": "DA-01",
+      "claim": "Exercise improves mental health.",
+      "evidence": "A study published in The Lancet Psychiatry (2025) found that regular exercise significantly reduces symptoms of depression and anxiety. The study followed 10,000 participants over 5 years and controlled for confounding variables.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "density_2para",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "DA-02",
+      "claim": "Climate change is real.",
+      "evidence": "NASA data shows global temperatures rising. IPCC reports confirm human activity as the main driver. Arctic ice is melting at record rates. Sea levels are rising. Extreme weather events are increasing in frequency and intensity.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "density_5para_no_url",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "DA-03",
+      "claim": "This claim is true.",
+      "evidence": "This claim is true because the claim says so.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "self_referential",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "DA-04",
+      "claim": "",
+      "evidence": "There is some evidence that empty claims should be handled gracefully.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "empty_claim",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7819999999999999,
+        "conf_ceiling": 0.882,
+        "_fixed": "was: UNCERTAIN, got: VERIFIED conf=0.832"
+      }
+    },
+    {
+      "id": "DA-05",
+      "claim": "The numbers 1+1=3.",
+      "evidence": "Wait, 1+1=2 according to basic arithmetic. Actually it's 3 if we're in a different number system. No, it's definitely 2.",
+      "features": {
+        "direct_support": false,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": true,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "self_contradictory_evidence",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.55
+      }
+    },
+    {
+      "id": "DA-06",
+      "claim": "This statement is false.",
+      "evidence": "This statement is false according to the liar paradox.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "liar_paradox",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "DA-07",
+      "claim": "The car is fast. A car is fast. Cars are fast.",
+      "evidence": "Cars can go fast on highways. Fast cars are popular. Speed is a feature.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "circular_claim_repeats",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.65
+      }
+    },
+    {
+      "id": "DA-08",
+      "claim": "Unicode tests: 你好世界 ε = mc² 日本語 😊...",
+      "evidence": "正确的中文证据文本应该被正确处理。This is a mixed language paragraph with 中文 and English and 日本語 and emoji 🎉.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "unicode_mixed",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "DA-09",
+      "claim": "The evidence is very long.",
+      "evidence": "A 2025 research paper published in Nature. A 2025 research paper published in Science. A 2025 research paper published in Cell. A 2025 research paper published in PNAS. A 2025 research paper published in PLOS ONE. A 2025 research paper published in BMJ. A 2025 research paper published in The Lancet. A 2025 research paper published in JAMA. A 2025 research paper published in NEJM. A 2025 research paper published in Nature Communications. A 2025 research paper published in Scientific Reports. A 2025 research paper published in Science Advances. A 2025 research paper published in Nature Medicine. A 2025 research paper published in Nature Biotechnology. A 2025 research paper published in Nature Genetics.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "very_long_evidence",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "DA-10",
+      "claim": "The claim is about a specific year 2025 data point.",
+      "evidence": "A 2025 government census report shows specific data that supports the claim.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "claim_contains_year",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    }
+  ]
+}

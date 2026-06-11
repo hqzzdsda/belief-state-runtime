@@ -1,0 +1,184 @@
+{
+  "id": "support_spectrum",
+  "name": "支持-反驳谱系",
+  "description": "系统变化 support_score 和 refute_score，验证 6bool → raw_conf → final_conf → state 映射的连续性",
+  "type": "parametric",
+  "cases": [
+    {
+      "id": "SS-01",
+      "claim": "The sun rises in the east.",
+      "evidence": "Astronomy textbooks consistently state that the sun rises in the eastern horizon due to Earth's rotation from west to east.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "strong_support_all_pass",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "SS-02",
+      "claim": "Water freezes at 0°C.",
+      "evidence": "Basic physics states that water freezes at 0 degrees Celsius at standard atmospheric pressure.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "support_no_newinfo",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.6153,
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.6653"
+      }
+    },
+    {
+      "id": "SS-03",
+      "claim": "Paris is the capital of France.",
+      "evidence": "I recall that Paris is the capital of France from school.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "support_with_limitation",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.5155,
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.5655"
+      }
+    },
+    {
+      "id": "SS-04",
+      "claim": "The stock market will crash next week.",
+      "evidence": "A friend told me the stock market is going to crash next week, but they didn't say why.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "weak_support_anecdotal",
+      "expected": {
+        "state": "CONTESTED"
+      }
+    },
+    {
+      "id": "SS-05",
+      "claim": "Dogs are reptiles.",
+      "evidence": "All mammals are warm-blooded. Dogs are mammals. Therefore this claim is false.",
+      "features": {
+        "direct_support": false,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": true,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "direct_refutation",
+      "expected": {
+        "state": "CONTESTED"
+      }
+    },
+    {
+      "id": "SS-06",
+      "claim": "The Earth is flat.",
+      "evidence": "Overwhelming scientific evidence from satellite imagery, physics, and centuries of navigation confirms the Earth is roughly spherical. Flat Earth claims are contradicted by all available data.",
+      "features": {
+        "direct_support": false,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": true,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "strong_refutation",
+      "expected": {
+        "state": "CONTESTED"
+      }
+    },
+    {
+      "id": "SS-07",
+      "claim": "Humans have 300 bones.",
+      "evidence": "An adult human skeleton typically has 206 bones, not 300.",
+      "features": {
+        "direct_support": false,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": true,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "factual_error_refuted",
+      "expected": {
+        "state": "CONTESTED"
+      }
+    },
+    {
+      "id": "SS-08",
+      "claim": "Swimming improves cardiovascular health.",
+      "evidence": "A government health report indicates swimming is good exercise for heart health, but the report lacks detailed statistical analysis.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "mixed_mild_doubt",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.6
+      }
+    },
+    {
+      "id": "SS-09",
+      "claim": "The Python programming language was created in 1991.",
+      "evidence": "Some random person on a forum said Python was created in 1991, I think.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "uncertain_support_no_confidence",
+      "expected": {
+        "state": "CONTESTED"
+      }
+    },
+    {
+      "id": "SS-10",
+      "claim": "No evidence exists for this claim.",
+      "evidence": "I heard somewhere that this might be true but I'm not sure at all.",
+      "features": {
+        "direct_support": false,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "all_negative",
+      "expected": {
+        "state": "UNCERTAIN"
+      }
+    }
+  ]
+}

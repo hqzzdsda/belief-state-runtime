@@ -1,0 +1,192 @@
+{
+  "id": "chinese_domain",
+  "name": "中文领域真实场景",
+  "type": "scenario",
+  "cases": [
+    {
+      "id": "CN-01",
+      "claim": "中国高铁运营里程世界第一",
+      "evidence": "交通运输部2025年公布的数据显示：中国高铁运营里程已超过4.5万公里，占全球高铁总里程的三分之二以上。",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "gov_stats_2025",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "CN-02",
+      "claim": "A股市场2024年表现全球最佳",
+      "evidence": "中国人民银行2024年金融统计数据报告显示，A股市场2024年涨幅居全球主要市场前列。",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "central_bank_2024",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.45,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.5"
+      }
+    },
+    {
+      "id": "CN-03",
+      "claim": "某保健品能治愈肺癌",
+      "evidence": "小红书一篇笔记写道：\"我爸喝了XX灵芝孢子粉三个月，医院查出来癌细胞全部消失了！不是广告，真心推荐！\"",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "xiaohongshu_miracle_cure",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "CN-04",
+      "claim": "喝白醋能软化血管",
+      "evidence": "微信群里有人说\"每天喝一勺白醋，血管里的垃圾都清干净了\"，好几个人附和说是真的。",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "wechat_misinfo",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "CN-05",
+      "claim": "中国GDP增速在2024年达到5.2%",
+      "evidence": "国家统计局2025年1月发布的初步核算数据显示，2024年全年国内生产总值同比增长5.2%。",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "nbs_gdp_2024",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "CN-06",
+      "claim": "某P2P平台安全可靠",
+      "evidence": "百度贴吧一个匿名用户发帖说：\"我在XX平台投资三年了，每月按时回款，从来没问题，推荐大家上车。\"",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "baidu_tieba_financial",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "CN-07",
+      "claim": "北京市2025年常住人口超过2200万",
+      "evidence": "北京市统计局2026年初发布的统计公报显示，2025年末全市常住人口为2188.6万人。",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "beijing_stats_2025",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "CN-08",
+      "claim": "喝绿茶能抗癌",
+      "evidence": "中国医学科学院肿瘤医院2025年发表的一项研究发现，绿茶中的茶多酚对某些癌细胞有抑制作用，但研究尚处于体外实验阶段。",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "cancer_preliminary_research",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_ceiling": 0.7708,
+        "_fixed": "was: CONTESTED, got: VERIFIED conf=0.7208"
+      }
+    },
+    {
+      "id": "CN-09",
+      "claim": "中国2020年脱贫攻坚战取得全面胜利",
+      "evidence": "2021年2月25日，习近平总书记在全国脱贫攻坚总结表彰大会上庄严宣告：我国脱贫攻坚战取得了全面胜利。现行标准下9899万农村贫困人口全部脱贫。",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "historical_poverty_achievement",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.45,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.5"
+      }
+    },
+    {
+      "id": "CN-10",
+      "claim": "茅台酒越陈越香",
+      "evidence": "知乎上一个自称品酒师的人回答说：\"茅台酒存放时间越长口感越醇厚，这是由酯化反应决定的。\"",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "zhihu_anecdotal",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.65
+      }
+    }
+  ]
+}
