@@ -277,7 +277,7 @@ async function loadFromGitHub(){
   const dot=document.getElementById("source-dot");
   const text=document.getElementById("source-text");
   try{
-    const resp=await fetch(GITHUB_RAW,{cache:"no-store"});
+    const resp=await fetch(GITHUB_RAW);
     if(!resp.ok)throw new Error(resp.status);
     sourceCode=await resp.text();
     sourceLoaded=true;
@@ -315,11 +315,14 @@ function parseSourceCode(code){
       keywords[kws.join(",")]=parseFloat(m[2]);
     }
   }
-  // Parse thresholds
+  // Parse thresholds (try v1 patterns, fallback to v2 ProjectionConfig defaults)
   const verifyMatch=code.match(/if conf >= ([\d.]+): return "VERIFIED"/);
-  if(verifyMatch)thresholds.verify=parseFloat(verifyMatch[1]);
+  if(verifyMatch){thresholds.verify=parseFloat(verifyMatch[1]);}
+  else{const vm2=code.match(/verify_threshold:\s*float\s*=\s*([\d.]+)/);if(vm2)thresholds.verify=parseFloat(vm2[1]);}
+
   const contestMatch=code.match(/min\(result\.raw_confidence,\s*([\d.]+)\)/);
-  if(contestMatch)thresholds.contest=parseFloat(contestMatch[1]);
+  if(contestMatch){thresholds.contest=parseFloat(contestMatch[1]);}
+  else{const cm2=code.match(/contradiction_cap:\s*float\s*=\s*([\d.]+)/);if(cm2)thresholds.contest=parseFloat(cm2[1]);}
   // Parse signal weights from quality_factor formula
   const wfMatch=code.match(/([\d.]+)\s*\*\s*result\.source_reliability\s*\+\s*([\d.]+)\*\s*result\.evidence_density\s*\+\s*([\d.]+)\*\s*result\.temporal_freshness\s*\+\s*([\d.]+)\*\s*result\.provenance_quality/);
   if(wfMatch){
