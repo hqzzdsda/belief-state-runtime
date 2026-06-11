@@ -18,6 +18,9 @@
 ![Codex](https://img.shields.io/badge/Agent-Codex-0891b2)
 ![Cursor](https://img.shields.io/badge/Agent-Cursor-4f46e5)
 ![Copilot](https://img.shields.io/badge/Agent-Copilot-0284c7)
+<br>
+[![ClawHub](https://img.shields.io/badge/Skill-ClawHub-6366f1)](https://clawhub.ai/hqzzdsda/belief-assessor)
+[![SkillHub](https://img.shields.io/badge/Skill-SkillHub-ec4899)](https://skillhub.cn/skills/belief-assessor)
 
 <br>
 
