@@ -451,11 +451,11 @@ Evaluates the trustworthiness of a claim based on evidence. **v2** adds a projec
 
 | Feature | v1 | v2 |
 |---------|-----|-----|
-| Thresholds | Hardcoded 0.65/0.25 | Configurable via `ProjectionConfig` |
+| Thresholds | Hardcoded 0.65/0.25 | Configurable via \`ProjectionConfig\` |
 | Constraints | None | 4-way: contradiction, provenance, temporal, density |
 | Confidence interval | ±0.15 fixed | Formula: (1-Q)×base + min/√n_eff |
 | Strategies | 1 | 3 presets: standard, conservative, permissive |
-| Output reasons | None | `veto_reasons` explains WHY |
+| Output reasons | None | \`veto_reasons\` explains WHY |
 | LLM calls | 1 | 1 (unchanged) |
 
 ## When to use
@@ -545,19 +545,19 @@ States:
 
 ### v2: Interpreting veto_reasons
 
-When `veto_reasons` is non-empty, the confidence was deliberately capped:
+When \`veto_reasons\` is non-empty, the confidence was deliberately capped:
 
 | Reason | Meaning |
 |--------|---------|
-| `contradiction_capped` | Evidence contradicts — confidence capped |
-| `contradiction_dominates` | Refutation dominates support — forced CONTESTED |
-| `provenance_gated` | Source quality too low — cannot be VERIFIED |
-| `temporal_decayed` | Evidence is stale — confidence capped (historical claims exempt) |
-| `density_floor` | Evidence too sparse — cannot be VERIFIED |
+| \`contradiction_capped\` | Evidence contradicts — confidence capped |
+| \`contradiction_dominates\` | Refutation dominates support — forced CONTESTED |
+| \`provenance_gated\` | Source quality too low — cannot be VERIFIED |
+| \`temporal_decayed\` | Evidence is stale — confidence capped (historical claims exempt) |
+| \`density_floor\` | Evidence too sparse — cannot be VERIFIED |
 
 ## Strategy Presets
 
-```python
+\`\`\`python
 # Standard (default) — general-purpose
 config = ProjectionConfig.standard()
 
@@ -573,7 +573,7 @@ config = ProjectionConfig(
     contradiction_cap=0.45,
     min_provenance_quality=0.60,
 )
-```
+\`\`\`
 
 ## Files
 
