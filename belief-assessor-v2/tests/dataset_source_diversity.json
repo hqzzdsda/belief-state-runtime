@@ -1,0 +1,192 @@
+{
+  "id": "source_diversity",
+  "name": "来源多样性",
+  "type": "parametric",
+  "cases": [
+    {
+      "id": "SD-01",
+      "claim": "A new drug shows promise for Alzheimer's.",
+      "evidence": "https://www.nature.com/articles/alzheimer-drug-trial-2025 reports phase 3 trial success.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "gov+edu_2domain",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "SD-02",
+      "claim": "A new drug shows promise for Alzheimer's.",
+      "evidence": "https://www.nature.com/articles/alzheimer-drug-trial-2025 reports phase 3 trial success. Another study at https://www.nih.gov/alzheimer confirms similar results.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "two_gov_edu_domains",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.75
+      }
+    },
+    {
+      "id": "SD-03",
+      "claim": "Vaccines cause autism.",
+      "evidence": "There was a discredited study in 1998 that suggested a link, but it was retracted.",
+      "features": {
+        "direct_support": false,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": true,
+        "limitation": true,
+        "error_outdated": true
+      },
+      "tag": "refuted_outdated_no_url",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.55
+      }
+    },
+    {
+      "id": "SD-04",
+      "claim": "Bitcoin was created by Satoshi Nakamoto.",
+      "evidence": "A New York Times article from 2023 discusses the mystery of Satoshi Nakamoto.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "single_news_domain",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.5499999999999999,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.6"
+      }
+    },
+    {
+      "id": "SD-05",
+      "claim": "China's GDP grew by 5.2% in 2024.",
+      "evidence": "According to the National Bureau of Statistics of China, GDP grew 5.2% in 2024.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "chinese_gov_keywords",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.5499999999999999,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.6"
+      }
+    },
+    {
+      "id": "SD-06",
+      "claim": "Coffee is bad for your health.",
+      "evidence": "A random blog said drinking coffee is terrible for you.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "anonymous_blog",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "SD-07",
+      "claim": "A new battery technology will double EV range.",
+      "evidence": "https://www.forbes.com/sites/battery-technology reports 50% range improvement. https://www.reuters.com/technology/ confirms. https://twitter.com/elonmusk tweets support.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "three_diverse_domains",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.8
+      }
+    },
+    {
+      "id": "SD-08",
+      "claim": "Bitcoin price dropping.",
+      "evidence": "According to a Telegram channel, Bitcoin will crash tomorrow.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "telegram_channel",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6
+      }
+    },
+    {
+      "id": "SD-09",
+      "claim": "A new restaurant opened downtown.",
+      "evidence": "I saw a poster on the street.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "anecdotal_implicit",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.6722,
+        "_fixed": "was ceiling 0.6, got conf=0.6222"
+      }
+    },
+    {
+      "id": "SD-10",
+      "claim": "The global population is over 8 billion.",
+      "evidence": "https://www.un.org/development/desa/pd/ reports world population at 8.1 billion in 2024. https://www.worldometers.info/world-population/ confirms 8.2 billion as of 2025.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "two_domains_current",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.75
+      }
+    }
+  ]
+}

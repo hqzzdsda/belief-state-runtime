@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "name": "belief-assessor-v2 系统测试集",
+    "version": "1.0",
+    "description": "6 维度参数量化测试集，覆盖支持-反驳谱系、时效/质量、来源多样性、密度、增量链、边界",
+    "total_cases": 60
+  },
+  "test_groups": [
+    {
+      "id": "support_spectrum",
+      "name": "支持-反驳谱系",
+      "description": "系统变化 support_score 和 refute_score，验证 6bool → raw_conf → final_conf → state 映射的连续性",
+      "type": "parametric"
+    },
+    {
+      "id": "quality_temporal",
+      "name": "质量与时序",
+      "description": "同一条证据随年份变化（2020 vs 2024 vs 2026）、历史事实豁免、来源权威分层",
+      "type": "parametric"
+    },
+    {
+      "id": "source_diversity",
+      "name": "来源多样性",
+      "description": "多域名/单域名/无域名+关键词/无域名+坏关键词，验证 provenance_quality 和 source_reliability 交互",
+      "type": "parametric"
+    },
+    {
+      "id": "density",
+      "name": "证据密度",
+      "description": "从0段到5段，验证 evidence_density 对 quality_factor 的影响",
+      "type": "parametric"
+    },
+    {
+      "id": "incremental_chain",
+      "name": "增量信念链",
+      "description": "3-5步序列，验证 belief 按 Bayesian 公式演化",
+      "type": "sequential"
+    },
+    {
+      "id": "adversarial",
+      "name": "对抗/边界",
+      "description": "自我指涉、claim==evidence、极长证据、空claim、自矛盾证据",
+      "type": "edge"
+    },
+    {
+      "id": "chinese_domain",
+      "name": "中文领域",
+      "description": "中文社交平台、政府公告、历史事实、A股市场等真实场景",
+      "type": "scenario"
+    }
+  ],
+  "summary": {
+    "total_groups": 7,
+    "total_scenarios": 60,
+    "coverage": {
+      "support_refute_combinations": "6/6 正交",
+      "temporal_range": "2020-2026",
+      "source_reliability_range": "0.3-0.9",
+      "evidence_density_range": "0.0-0.9",
+      "provenance_quality_range": "0.4-1.0",
+      "incremental_steps": "3-5 per chain",
+      "multi_chain_count": 4
+    }
+  }
+}

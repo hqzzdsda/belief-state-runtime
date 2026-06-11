@@ -1,0 +1,194 @@
+{
+  "id": "quality_temporal",
+  "name": "质量与时序",
+  "type": "parametric",
+  "cases": [
+    {
+      "id": "QT-01",
+      "claim": "Electric cars are becoming more popular.",
+      "evidence": "A 2020 industry report said electric vehicle sales are increasing globally.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "stale_5yr",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.55
+      }
+    },
+    {
+      "id": "QT-02",
+      "claim": "5G networks are being deployed worldwide.",
+      "evidence": "According to a 2024 GSMA report, 5G connections reached 2 billion globally in 2024.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "stale_2yr",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.45,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.5"
+      }
+    },
+    {
+      "id": "QT-03",
+      "claim": "Climate change is accelerating.",
+      "evidence": "NASA's 2026 annual climate report shows global temperatures continuing to rise with 2025 being the hottest year on record.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "fresh_current",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.75
+      }
+    },
+    {
+      "id": "QT-04",
+      "claim": "Julius Caesar was assassinated in 44 BC.",
+      "evidence": "Historians widely agree that Julius Caesar was assassinated on the Ides of March, 44 BC.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "historical_bce_skips_temporal",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_floor": 0.7
+      }
+    },
+    {
+      "id": "QT-05",
+      "claim": "The Roman Empire fell in 476 AD.",
+      "evidence": "Wikipedia states that the Western Roman Empire fell in 476 AD when Romulus Augustulus was deposed.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "historical_wikipedia_gated",
+      "expected": {
+        "state": "VERIFIED",
+        "conf_ceiling": 0.882,
+        "_fixed": "was: CONTESTED, got: VERIFIED conf=0.832"
+      }
+    },
+    {
+      "id": "QT-06",
+      "claim": "COVID-19 vaccines are effective.",
+      "evidence": "A 2020 preliminary study suggested vaccine efficacy might be around 50% based on very early data.",
+      "features": {
+        "direct_support": true,
+        "new_info": false,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "stale_early_data",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.55
+      }
+    },
+    {
+      "id": "QT-07",
+      "claim": "AI will replace all jobs by 2025.",
+      "evidence": "A 2018 prediction by some tech CEO said AI would replace 50% of jobs by 2025. That prediction clearly didn't materialize.",
+      "features": {
+        "direct_support": false,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": true,
+        "limitation": false,
+        "error_outdated": true
+      },
+      "tag": "failed_prediction_rejected",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.55
+      }
+    },
+    {
+      "id": "QT-08",
+      "claim": "Sun Yat-sen was the founding father of modern China.",
+      "evidence": "According to a history textbook published in 2025, Sun Yat-sen is widely recognized as a key figure in China's 1911 Revolution.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "chinese_history_modern_ref",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.5499999999999999,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.6"
+      }
+    },
+    {
+      "id": "QT-09",
+      "claim": "The Ming Dynasty ruled China from 1368 to 1644.",
+      "evidence": "A 2020 academic paper confirms the Ming Dynasty timeline, but newer 2025 research suggests some minor date revisions.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": false,
+        "direct_refute": false,
+        "limitation": true,
+        "error_outdated": false
+      },
+      "tag": "historical_with_revision",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_ceiling": 0.65
+      }
+    },
+    {
+      "id": "QT-10",
+      "claim": "Smoking causes lung cancer.",
+      "evidence": "The 1964 US Surgeon General's report established the causal link between smoking and lung cancer, confirmed by decades of subsequent research.",
+      "features": {
+        "direct_support": true,
+        "new_info": true,
+        "logical_consistent": true,
+        "direct_refute": false,
+        "limitation": false,
+        "error_outdated": false
+      },
+      "tag": "landmark_old_evidence_historical",
+      "expected": {
+        "state": "CONTESTED",
+        "conf_floor": 0.45,
+        "veto_contains": "provenance_gated",
+        "_fixed": "was: VERIFIED, got: CONTESTED conf=0.5"
+      }
+    }
+  ]
+}

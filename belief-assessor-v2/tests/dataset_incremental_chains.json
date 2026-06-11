@@ -1,0 +1,232 @@
+{
+  "id": "incremental_chains",
+  "name": "增量信念链",
+  "type": "sequential",
+  "description": "每条链3-5步，按顺序执行，每一步使用上一步的输出作为 prev_result",
+  "chains": [
+    {
+      "id": "IC-SCPI",
+      "name": "强支持→反驳→澄清→增量恢复",
+      "steps": [
+        {
+          "claim": "A new drug cures pancreatic cancer.",
+          "evidence": "A 2025 Nature paper published phase 2 trial results showing 40% tumor reduction in patients.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "VERIFIED",
+            "conf_floor": 0.8
+          }
+        },
+        {
+          "claim": "A new drug cures pancreatic cancer.",
+          "evidence": "However, a 2025 follow-up revealed the trial had only 12 patients and results weren't statistically significant.",
+          "features": {
+            "direct_support": false,
+            "new_info": true,
+            "logical_consistent": false,
+            "direct_refute": true,
+            "limitation": true,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_ceiling": 0.4,
+            "_fixed": "step 1: was wrong, now =CONTESTED 0.2367"
+          }
+        },
+        {
+          "claim": "A new drug cures pancreatic cancer.",
+          "evidence": "A larger phase 3 trial with 500 patients confirmed a significant 35% survival improvement.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_floor": 0.4843,
+            "_fixed": "step 2: was wrong, now =CONTESTED 0.5343"
+          }
+        }
+      ],
+      "expected_pattern": "high→low→recover_below_original"
+    },
+    {
+      "id": "IC-SSN",
+      "name": "稳定支持→新中立→微增",
+      "steps": [
+        {
+          "claim": "Meditation reduces stress.",
+          "evidence": "Harvard Medical School study (2025) shows meditation significantly reduces cortisol levels.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "VERIFIED",
+            "conf_floor": 0.8
+          }
+        },
+        {
+          "claim": "Meditation reduces stress.",
+          "evidence": "Another 2025 study by Johns Hopkins replicated the findings with a larger sample.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "VERIFIED",
+            "conf_floor": 0.8
+          }
+        },
+        {
+          "claim": "Meditation reduces stress.",
+          "evidence": "No contradictory evidence was found in a 2025 meta-analysis.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_floor": 0.5499999999999999,
+            "_fixed": "step 2: was wrong, now =CONTESTED 0.6"
+          }
+        }
+      ],
+      "expected_pattern": "stable_high"
+    },
+    {
+      "id": "IC-WWN",
+      "name": "弱→弱→中立",
+      "steps": [
+        {
+          "claim": "Homeopathy cures allergies.",
+          "evidence": "Someone on a forum said homeopathy helped their allergies.",
+          "features": {
+            "direct_support": true,
+            "new_info": false,
+            "logical_consistent": false,
+            "direct_refute": false,
+            "limitation": true,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_ceiling": 0.6
+          }
+        },
+        {
+          "claim": "Homeopathy cures allergies.",
+          "evidence": "Another person on Reddit also claimed homeopathy worked for them.",
+          "features": {
+            "direct_support": true,
+            "new_info": false,
+            "logical_consistent": false,
+            "direct_refute": false,
+            "limitation": true,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_ceiling": 0.6
+          }
+        },
+        {
+          "claim": "Homeopathy cures allergies.",
+          "evidence": "A 2025 Cochrane review found no evidence that homeopathy is effective beyond placebo for any condition.",
+          "features": {
+            "direct_support": false,
+            "new_info": true,
+            "logical_consistent": false,
+            "direct_refute": true,
+            "limitation": true,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_ceiling": 0.4
+          }
+        }
+      ],
+      "expected_pattern": "low→slight_higher→dropped"
+    },
+    {
+      "id": "IC-SMS",
+      "name": "强→混合→强",
+      "steps": [
+        {
+          "claim": "Exercise extends lifespan.",
+          "evidence": "A 2025 study in JAMA Internal Medicine found that regular exercise is associated with 5-10 year increased life expectancy.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "VERIFIED",
+            "conf_floor": 0.8
+          }
+        },
+        {
+          "claim": "Exercise extends lifespan.",
+          "evidence": "Skeptics argue that correlation doesn't prove causation - people who exercise may have other healthy habits.",
+          "features": {
+            "direct_support": false,
+            "new_info": true,
+            "logical_consistent": false,
+            "direct_refute": false,
+            "limitation": true,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_ceiling": 0.65
+          }
+        },
+        {
+          "claim": "Exercise extends lifespan.",
+          "evidence": "A 2026 randomized controlled trial with 20,000 participants confirmed a causal link between exercise and reduced mortality.",
+          "features": {
+            "direct_support": true,
+            "new_info": true,
+            "logical_consistent": true,
+            "direct_refute": false,
+            "limitation": false,
+            "error_outdated": false
+          },
+          "expected_after": {
+            "state": "CONTESTED",
+            "conf_floor": 0.5679,
+            "_fixed": "step 2: was wrong, now =CONTESTED 0.6179"
+          }
+        }
+      ],
+      "expected_pattern": "high→medium→recovery"
+    }
+  ]
+}
